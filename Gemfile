@@ -33,6 +33,9 @@ gem "sidekiq"
 # Testing
 group :test, :development do
   gem 'rspec-rails'
+  gem 'shoulda', '~> 3.5.0'
+  gem 'factory_girl_rails', '4.2.1'
+  gem 'faker', '~> 1.5.0'
 end
 
 # Use ActiveModel has_secure_password
