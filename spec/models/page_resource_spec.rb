@@ -10,6 +10,9 @@ RSpec.describe PageResource, type: :model do
       expect( FactoryGirl.create(:page_resource) ).to be_valid
       expect( FactoryGirl.create(:recent_resource) ).to be_valid
       expect( FactoryGirl.create(:old_resource) ).to be_valid
+      expect( FactoryGirl.create(:old_updating_resource) ).to be_valid
+      expect( FactoryGirl.create(:new_creating_resource) ).to be_valid
+      expect( FactoryGirl.create(:new_failed_resource) ).to be_valid
     end
     it "is invalid without an URL" do
       expect( FactoryGirl.build(:page_resource, url: nil)).not_to be_valid

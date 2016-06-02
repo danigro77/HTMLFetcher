@@ -1,14 +1,19 @@
 class PageResource < ActiveRecord::Base
+  include UrlHelper
   has_many :jobs
 
   validates_presence_of :url
   validate :url_format
 
+  def update_populatiry
+    pop = popularity+1
+    self.update(popularity: pop) ? true : errors.add(:popularity, 'was not updated')
+  end
+
   private
 
   def url_format
-    uri = URI.parse(url) if url
-    unless url && uri && url.match(/(https?|ftp):\/\//)
+    unless valid_url_format?(url)
       errors.add(:request_url, 'is not valid')
     end
   end

@@ -20,4 +20,8 @@
 # available at http://guides.rubyonrails.org/i18n.html.
 
 en:
-  hello: "Hello world"
+  status_messages:
+    failed: "Your request has failed. Please try again."
+    updating: "Your request is in progress."
+    creating: "Your request is in progress."
+    received: "Your request is in progress."
