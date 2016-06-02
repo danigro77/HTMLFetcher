@@ -27,6 +27,9 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 # HAML
 gem "haml-rails", "~> 0.8"
 
+# Sidekiq
+gem "sidekiq"
+
 # Testing
 group :test, :development do
   gem 'rspec-rails'
