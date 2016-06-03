@@ -1,3 +1,5 @@
+require 'sidekiq/api'
+
 module JobHelper
   def handle_job_request(url)
     page_resource = PageResource.find_by(url: url)
@@ -22,6 +24,18 @@ module JobHelper
       response = nil
     end
     response
+  end
+
+  def handle_failed_jobs
+    ds = Sidekiq::DeadSet.new
+    if ds.size > 0
+      Rails.logger("SIDEKIQ: #{ds.size} jobs failed!")
+      ds.each do |dead_job|
+        job = Job.find_by(jid:dead_job.jid)
+        job.update(status: 'failed') if job
+      end
+      ds.clear
+    end
   end
 
   private

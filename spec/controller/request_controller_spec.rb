@@ -5,6 +5,7 @@ RSpec.describe RequestController, :type => :controller do
 
   describe 'GET #job' do
     it 'responds successfully' do
+      url = "http://pablokohls.herokuapp.com"
       get :job, { url: url }
       expect(response).to be_success
       expect(response).to have_http_status(200)

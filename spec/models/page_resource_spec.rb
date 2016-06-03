@@ -27,7 +27,7 @@ RSpec.describe PageResource, type: :model do
   # Relations
   # =========
   describe 'Relations' do
-    it { should have_many(:jobs) }
+    it { should have_many(:workers) }
   end
 
   # Methods

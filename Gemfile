@@ -27,8 +27,10 @@ gem 'sdoc', '~> 0.4.0', group: :doc
 # HAML
 gem "haml-rails", "~> 0.8"
 
-# Sidekiq
+# Sidekiq & SidekiqWeb
 gem "sidekiq"
+gem 'sinatra', require: false
+gem 'slim'
 
 # Testing
 group :test, :development do
