@@ -74,6 +74,6 @@ To run them type in your console:
 
 ## Things to improve
 1. The error handeling needs more work
-2. The front-end could use some polish, but I build it mainly for trouble shooting
+2. The front-end could use some polish, but I built it mainly for trouble shooting
 3. I'd like to spend more time on the Worker test cases
 4. The view has at the moment no testing at all
