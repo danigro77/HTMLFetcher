@@ -55,11 +55,10 @@ module JobHelper
       when page_resource.has_creating_jobs?
         job = page_resource.last_creating_job
       when page_resource.has_failed_jobs? && page_resource.is_existing_page?(page_resource.url)
-        job = page_resource.latest_job
-        job.update(status: 'updating')
+        job = create_job(page_resource, 'updating')
       else
         job = nil
-          end
+      end
     [job, page_resource]
   end
 
