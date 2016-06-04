@@ -36,7 +36,7 @@ RSpec.describe RequestController, :type => :controller do
 
       it 'returns a job_id' do
         new_job = Job.last
-        expect(response.body).to eq({job_id: new_job.id, job_status: new_job.status}.to_json)
+        expect(response.body).to eq({job_id: new_job.id, job_status: new_job.status, page_id: new_job.page_resource.id}.to_json)
       end
     end
 
@@ -46,7 +46,7 @@ RSpec.describe RequestController, :type => :controller do
       let!(:all_pages) { PageResource.all.count }
       let!(:all_jobs) { Job.all.count }
       let!(:old_popularity) { old_requested_page.popularity }
-      let!(:old_html) { old_requested_page.html }
+      let!(:old_updated_at) { old_requested_page.updated_at }
 
       before do
         get :job, { url: reuse_url }
@@ -58,9 +58,9 @@ RSpec.describe RequestController, :type => :controller do
         expect(old_requested_page.popularity).to eq old_popularity+1
       end
 
-      xit 'fetches new html data for this PageResource' do
+      it 'fetches new data for this PageResource' do
         old_requested_page.reload
-        expect(old_requested_page.html).to_not eq old_html
+        expect(old_requested_page.updated_at).to_not eq old_updated_at
       end
 
       it 'creates a Job' do
@@ -71,7 +71,7 @@ RSpec.describe RequestController, :type => :controller do
 
       it 'returns a job_id' do
         new_job = Job.last
-        expect(response.body).to eq({job_id: new_job.id, job_status: new_job.status}.to_json)
+        expect(response.body).to eq({job_id: new_job.id, job_status: new_job.status, page_id: new_job.page_resource.id}.to_json)
       end
     end
 
@@ -100,13 +100,16 @@ RSpec.describe RequestController, :type => :controller do
 
       it 'creates a Job' do
         expect(Job.last.page_resource).to eq old_requested_page
-        expect(Job.last.status).to eq "updating"
+        expect(Job.last.status).to eq "done"
         expect(Job.all.count).to eq all_jobs+1
       end
 
       it 'returns a job_id' do
         new_job = Job.last
-        expect(response.body).to eq({job_id: new_job.id, job_status: new_job.status}.to_json)
+        {job_id: new_job.id, job_status: new_job.status, page_id: new_job.page_resource.id}.each do |key, value|
+          expect(response.body).to match key.to_s
+          expect(response.body).to match value.to_s
+        end
       end
     end
 
@@ -124,7 +127,7 @@ RSpec.describe RequestController, :type => :controller do
     it 'fails without the expected params' do
       get :status, { job_id: 'bla' }
       expect(response).to_not be_success
-      expect(response).to have_http_status(400)
+      expect(response).to have_http_status(404)
     end
 
     context 'when job is unfinished' do
@@ -137,7 +140,7 @@ RSpec.describe RequestController, :type => :controller do
         end
 
         it 'returns a status update' do
-          expect(response.body).to eq({status: 'creating', message: I18n.t("status_messages.#{request_job.status}")}.to_json)
+          expect(response.body).to eq({status: 'creating', job_id: "#{request_job.id}", page_id: page_resource.id, message: I18n.t("status_messages.#{request_job.status}")}.to_json)
         end
       end
       context 'and URL was known but outdated' do
@@ -149,7 +152,7 @@ RSpec.describe RequestController, :type => :controller do
         end
 
         it 'returns a status update' do
-          expect(response.body).to eq({status: 'updating', message: I18n.t("status_messages.#{request_job.status}")}.to_json)
+          expect(response.body).to eq({status: 'updating', job_id: "#{request_job.id}", page_id: page_resource.id, message: I18n.t("status_messages.#{request_job.status}")}.to_json)
         end
       end
     end
@@ -163,7 +166,7 @@ RSpec.describe RequestController, :type => :controller do
       end
 
       it 'returns a status update' do
-        expect(response.body).to eq({status: 'done', html: page_resource.html}.to_json)
+        expect(response.body).to eq({status: 'done', job_id: "#{request_job.id}", page_id: page_resource.id, html: page_resource.html}.to_json)
       end
     end
 
@@ -176,7 +179,7 @@ RSpec.describe RequestController, :type => :controller do
       end
 
       it 'returns a status update' do
-        expect(response.body).to eq({status: 'failed', message: I18n.t("status_messages.#{request_job.status}")}.to_json)
+        expect(response.body).to eq({status: 'failed', job_id: "#{request_job.id}", page_id: page_resource.id, message: I18n.t("status_messages.#{request_job.status}")}.to_json)
       end
     end
   end

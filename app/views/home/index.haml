@@ -1,101 +1,88 @@
 %h1 HTML Fetcher
 
-%input.request-url{type:'text', placeholder: 'Emter URL here'}
+%p.errors
+
+%input.request-url{type:'text', value: 'Enter URL here. Start with: http://'}
 %input.submit-button{type:'submit'}
 %ul.job-list
-  - @jobs.each do |job|
-    -job_class = "job_#{job.id}"
-    -url = job.page_resource.url
-    %li{class: job_class}
+  - @page_resources.each do |page_resource|
+    -job = page_resource.latest_job
+    -url = page_resource.url
+    %li{id: "page_#{page_resource.id}", 'data-page-id'=> page_resource.id}
       .url{title: url}= url
       .status= "Status: #{job.status}"
-      %button{class: job_class + " status-check"} Check status
+      %button{class: 'status-check', 'data-job-id'=> job.id} Check status
 %textarea
-
-:css
-  body {
-    padding:0;
-    margin:0;
-    background: gray;
-  }
-  .wrapper {
-    width: 620px;
-    margin: 0 auto;
-    background: ghostwhite;
-    padding: 20px;
-  }
-  h1 {
-    margin: 0;
-  }
-  input, textarea {
-    margin-left: 20px;
-    margin-top:20px;
-  }
-  input[type='text'] {
-    width: 435px;
-  }
-  textarea {
-    min-width: 560px;
-    min-height:300px;
-  }
-  ul {
-    padding: 0;
-    height: 200px;
-    overflow: scroll;
-  }
-  li {
-    list-style-type: none;
-  }
-  li.shown {
-    background: gainsboro;
-  }
-  li div {
-    float: left;
-    margin-left: 20px;
-  }
-  .url {
-    width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .status {
-    width: 150px;
-  }
 
 :javascript
   $(function() {
      function HTMLFetcher() {
-        $('.submit-button').on('click', function() {
+        $(document).on('click', '.submit-button', function() {
           var $requestURL = $('.request-url').val();
           $.get('request_job/?url=' + encodeURIComponent($requestURL), function() {
           }).done(function(resp) {
-            var jobID = 'job_' + resp.job_id;
-            var html = "<li class='" + jobID + "'>" + $requestURL + "</li><button class='" + jobID + "'>" + resp.job_status + "</button>"
-            if (resp.job_status === 'creating' ) {
+            cleanPage();
+            var html = "<li id='page_" + resp.page_id + "' data-page-id='" + resp.page_id + "'>" +
+                          "<div class='url'>" + $requestURL + "</div>" +
+                          "<div class='status'>Status: " + resp.job_status + "</div>" +
+                          "<button class='status-check' data-job-id='" + resp.job_id + "'>Check status</button>" +
+                        "</li>"
+            var $pageItem = $('ul').find("[data-page-id=" + resp.page_id + "]");
+            if (resp.job_status === 'creating' && $pageItem.length === 0) {
               $('.job-list').prepend(html);
+            } else if (resp.job_status === 'done') {
+              setHTML($pageItem, resp.html);
             } else {
-              $('li.'+jobID).html(html);
+              $pageItem.html(html);
             }
+          }).fail(function(resp) {
+            handleError(resp);
           });
         });
-
-        $('.status-check').on('click', function() {
-          var jobClass = $(this).attr('class').split(" ")[0]
-          var jobId = jobClass.split('_')[1];
-          var $jobItem = $("li." + jobClass);
-          var $jobItemStatus = $("li." + jobClass + " .status");
+        $(document).on('click', '.status-check', function() {
+          var $button = $(this);
+          var jobId = $button.attr('data-job-id');
+          var $pageItem = $button.closest('li');
+          var $pageItemStatus = $pageItem.find(".status");
           $.get('request_status/?job_id=' + jobId, function() {
           }).done(function(resp) {
-            console.log(resp);
-            $jobItemStatus.text("Status: " + resp.status);
+            $pageItemStatus.text("Status: " + resp.status);
             if (resp.status === 'done') {
-              $('li').removeClass('shown');
-              $('textarea').val(resp.html);
-              $jobItem.addClass('shown');
+              setHTML($pageItem, resp.html);
             }
+          }).fail(function(resp) {
+            handleError(resp);
           });
         });
+        function setHTML($pageItem, html) {
+          cleanPage();
+          $('textarea').val(html);
+          $pageItem.addClass('shown');
+        }
+        function cleanPage() {
+          $('li').removeClass('shown');
+          $("input[type='text']").val("http://");
+          $("textarea").val("");
+          $('.errors').text('');
+        };
+        function handleError(resp) {
+          var message;
+          switch (resp.status) {
+            case 500:
+              message = 'Server error';
+              break;
+            case 404:
+              message = 'Not found';
+              break;
+            case 400:
+              message = 'Bad request';
+              break;
+            default:
+              message = 'Something went wrong.'
+          };
+          $('.errors').text(message);
+        };
+        cleanPage();
      }
      HTMLFetcher();
   });

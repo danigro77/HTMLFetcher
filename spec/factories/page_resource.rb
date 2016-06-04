@@ -52,7 +52,7 @@ FactoryGirl.define do
 
     factory :recent_resource, traits: [:with_html, :recent_update, :with_done_job]
     factory :old_resource, traits: [:with_html, :old_update, :with_done_job]
-    factory :old_updating_resource, traits: [:with_html, :recent_update, :with_updating_job]
+    factory :old_updating_resource, traits: [:with_html, :old_update, :with_updating_job]
     factory :new_creating_resource, traits: [:with_creating_job]
     factory :new_failed_resource, traits: [:with_failed_job]
 

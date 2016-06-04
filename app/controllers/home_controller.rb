@@ -1,5 +1,5 @@
 class HomeController < ApplicationController
   def index
-    @jobs = Job.all
+    @page_resources = PageResource.sort_by_popularity
   end
 end

@@ -1,0 +1,49 @@
+body {
+  padding:0;
+  margin:0;
+  background: gray;
+}
+.wrapper {
+  width: 620px;
+  margin: 0 auto;
+  background: ghostwhite;
+  padding: 20px;
+}
+h1 {
+  margin: 0;
+}
+input, textarea {
+  margin-left: 20px;
+  margin-top:20px;
+}
+input[type='text'] {
+  width: 435px;
+}
+textarea {
+  min-width: 560px;
+  min-height:300px;
+}
+ul {
+  padding: 0;
+  height: 200px;
+  overflow: scroll;
+}
+li {
+  list-style-type: none;
+  &.shown {
+    background: gainsboro;
+  }
+  div {
+    float: left;
+    margin-left: 20px;
+  }
+  .url {
+    width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .status {
+    width: 150px;
+  }
+}

@@ -7,17 +7,19 @@ module JobHelper
     case
       when resource_date.nil? # page was never requested before
         create_request(url)
-      when resource_date < DateTime.current.end_of_day # page request is old and needs updating
+      when page_resource.needs_updating? # request has done jobs and was not called within this day
         update_request(page_resource)
-      else # page request is recent and can be reused
+      when page_resource.has_done_jobs? && page_resource.latest_job.status == 'done' # page request is recent and can be reused
         reuse_request(page_resource)
+      else
+        resend_request(page_resource)
     end # returns an array [job, page_resource] when it could be saved and nil when not
   end
 
   def get_status_update(job_id)
     job = Job.find_by(id: job_id)
     if job
-      response = {status: job.status}
+      response = {status: job.status, job_id: job_id, page_id: job.page_resource.id}
       response[:html] = job.page_resource.html if job.status == 'done'
       response[:message] = I18n.t("status_messages.#{job.status.to_s}") || "Unknown action" unless job.status == 'done'
     else
@@ -28,14 +30,13 @@ module JobHelper
 
   def handle_failed_jobs
     ds = Sidekiq::DeadSet.new
-    if ds.size > 0
-      Rails.logger("SIDEKIQ: #{ds.size} jobs failed!")
-      ds.each do |dead_job|
-        job = Job.find_by(jid:dead_job.jid)
-        job.update(status: 'failed') if job
+    jobs = Job.all_creating
+    jobs.each do |job|
+      if ds.size > 0 && ds.find_job(job.jid)
+        job.update(status: 'failed')
       end
-      ds.clear
     end
+    ds.clear
   end
 
   private
@@ -43,22 +44,39 @@ module JobHelper
   def create_request(url) # when new
     page_resource = PageResource.new(url: url)
     if page_resource.save
-      [create_job(page_resource, :creating), page_resource]
+      [create_job(page_resource, 'creating'), page_resource]
     else
       [nil, nil]
     end
+  end
+
+  def resend_request(page_resource)
+    case
+      when page_resource.has_creating_jobs?
+        job = page_resource.last_creating_job
+      when page_resource.has_failed_jobs? && page_resource.is_existing_page?(page_resource.url)
+        job = page_resource.latest_job
+        job.update(status: 'updating')
+      else
+        job = nil
+          end
+    [job, page_resource]
   end
 
   def update_request(page_resource)
-    if page_resource.update_populatiry
-      [create_job(page_resource, :updating), page_resource]
-    else
-      [nil, nil]
-    end
+    update_and_reuse(page_resource, 'updating')
   end
 
   def reuse_request(page_resource)
-    [create_job(page_resource, :done), page_resource]
+    update_and_reuse(page_resource, 'done')
+  end
+
+  def update_and_reuse(page_resource, status)
+    if page_resource.update_popularity
+      [create_job(page_resource, status), page_resource]
+    else
+      [nil, nil]
+    end
   end
 
   def create_job(page_resource, status)
